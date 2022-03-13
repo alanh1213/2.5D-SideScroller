@@ -5,12 +5,20 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
 
+    //Variables para el movimiento
     Animator playerAnim;
     Rigidbody rb2d;
     [SerializeField] float runSpeed;
     [SerializeField] float walkSpeed;
     bool facingRight;
 
+    //Para el salto
+    bool grounded = false;
+    Collider[] groundCollisions;
+    float groundCheckRadius = 0.2f;
+    [SerializeField] LayerMask groundLayer;
+    [SerializeField] Transform groundCheck;
+    [SerializeField] float jumpHeight; 
 
     // Start is called before the first frame update
     void Awake()
@@ -30,12 +38,26 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
+        if(grounded && Input.GetAxis("Jump") > 0){
+            grounded = false;
+            playerAnim.SetBool("grounded", grounded);
+            rb2d.AddForce(new Vector3(0, jumpHeight, 0));
+        }
+
+
+        groundCollisions = Physics.OverlapSphere(groundCheck.position, groundCheckRadius, groundLayer);
+        if(groundCollisions.Length > 0) grounded = true;
+        else grounded = false;
+
+        playerAnim.SetBool("grounded", grounded);
+
+
         float move = Input.GetAxis("Horizontal");
         playerAnim.SetFloat("speed", Mathf.Abs(move));
         float sneaking = Input.GetAxisRaw("Fire3");
         playerAnim.SetFloat("sneaking", sneaking);
 
-        if(sneaking > 0){
+        if(sneaking > 0 && grounded){
             rb2d.velocity = new Vector3(move * walkSpeed, rb2d.velocity.y, 0);
         }else{
             rb2d.velocity = new Vector3(move * runSpeed, rb2d.velocity.y, 0);
