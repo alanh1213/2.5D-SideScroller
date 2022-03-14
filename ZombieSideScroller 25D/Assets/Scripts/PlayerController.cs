@@ -16,7 +16,7 @@ public class PlayerController : MonoBehaviour
     bool grounded = false;
     Collider[] groundCollisions;
     float groundCheckRadius = 0.2f;
-    [SerializeField] LayerMask groundLayer;
+    LayerMask groundLayer;
     [SerializeField] Transform groundCheck;
     [SerializeField] float jumpHeight; 
 
@@ -25,6 +25,7 @@ public class PlayerController : MonoBehaviour
     {
         playerAnim = GetComponent<Animator>();
         rb2d = GetComponent<Rigidbody>();
+        groundLayer = LayerMask.GetMask("ground");
     }
 
     private void Start() {
@@ -38,20 +39,23 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
+        //Animaciones y salto
         if(grounded && Input.GetAxis("Jump") > 0){
             grounded = false;
             playerAnim.SetBool("grounded", grounded);
             rb2d.AddForce(new Vector3(0, jumpHeight, 0));
         }
 
-
         groundCollisions = Physics.OverlapSphere(groundCheck.position, groundCheckRadius, groundLayer);
         if(groundCollisions.Length > 0) grounded = true;
         else grounded = false;
 
         playerAnim.SetBool("grounded", grounded);
+        playerAnim.SetFloat("verticalSpeed", rb2d.velocity.y);
 
 
+
+        //Movimiento
         float move = Input.GetAxis("Horizontal");
         playerAnim.SetFloat("speed", Mathf.Abs(move));
         float sneaking = Input.GetAxisRaw("Fire3");
@@ -63,7 +67,6 @@ public class PlayerController : MonoBehaviour
             rb2d.velocity = new Vector3(move * runSpeed, rb2d.velocity.y, 0);
         }
         
-
         if(move > 0 && !facingRight)Flip();
         else if(move < 0 && facingRight) Flip();
     }
@@ -71,5 +74,10 @@ public class PlayerController : MonoBehaviour
     void Flip(){
         facingRight = !facingRight;
         transform.localScale = new Vector3(transform.localScale.x, transform.localScale.y, transform.localScale.z * -1);
+    }
+
+    public float GetFacing(){
+        if(facingRight)return 1;
+        else return -1;
     }
 }
